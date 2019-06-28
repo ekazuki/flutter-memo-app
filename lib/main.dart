@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:memo_app/edit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -68,13 +69,12 @@ class MemoListState extends State<MemoList> {
     setState(() {
       _memoList.add("");
       _currentIndex = _memoList.length - 1;
-      Navigator.of(context).push(
-        MaterialPageRoute<void>(
-            builder: (BuildContext context) {
-              return new Edit(_memoList[_currentIndex], _onChanged);
-            },
-        )
-      );
+      storeData();
+      Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (BuildContext context) {
+          return new Edit(_memoList[_currentIndex], _onChanged);
+        },
+      ));
     });
   }
 
@@ -100,11 +100,26 @@ class MemoListState extends State<MemoList> {
         padding: const EdgeInsets.all(16.0),
         itemCount: itemCount,
         itemBuilder: /*1*/ (context, i) {
-          if (i.isOdd) return Divider();
+          if (i.isOdd) return Divider(height: 2);
           final index = (i / 2).floor();
           final memo = _memoList[index];
-          return _buildRow(memo, index);
+          return _buildWrappedRow(memo, index);
         });
+  }
+
+  Widget _buildWrappedRow(String content, int index) {
+    return Dismissible(
+      background: Container(color: Colors.red),
+      key: Key(content),
+      direction: DismissDirection.endToStart,
+      onDismissed: (direction) {
+        setState(() {
+          _memoList.removeAt(index);
+          storeData();
+        });
+      },
+      child: _buildRow(content, index),
+    );
   }
 
   Widget _buildRow(String content, int index) {
@@ -117,13 +132,10 @@ class MemoListState extends State<MemoList> {
       ),
       onTap: () {
         _currentIndex = index;
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(
-              builder: (BuildContext context) {
-                return new Edit(_memoList[_currentIndex], _onChanged);
-              }
-          )
-        );
+        Navigator.of(context)
+            .push(MaterialPageRoute<void>(builder: (BuildContext context) {
+          return new Edit(_memoList[_currentIndex], _onChanged);
+        }));
       },
     );
   }
