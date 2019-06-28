@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:memo_app/edit.dart';
-import 'package:memo_app/data.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() => runApp(MyApp());
 
@@ -18,41 +18,80 @@ class MyApp extends StatelessWidget {
 }
 
 class MemoListState extends State<MemoList> {
-  final _memoList = <MemoDataModel>[];
+  var _memoList = new List<String>();
+  var _currentIndex = -1;
+  bool _loading = true;
   final _biggerFont = const TextStyle(fontSize: 18.0);
-  MemoDataModel _currentMemo;
+
+  @override
+  void initState() {
+    super.initState();
+    this.loadMemoList();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final title = "Home";
+    if (_loading) {
+      return Scaffold(
+          appBar: AppBar(
+            title: Text(title),
+          ),
+          body: CircularProgressIndicator());
+    }
     return Scaffold(
       appBar: AppBar(
-        title: Text('Memo App'),
+        title: Text(title),
       ),
       body: _buildList(),
-      floatingActionButton: new FloatingActionButton(
+      floatingActionButton: FloatingActionButton(
         onPressed: _addMemo,
         tooltip: 'New Memo',
-        child: new Icon(Icons.add),
+        child: Icon(Icons.add),
       ),
     );
   }
 
+  void loadMemoList() {
+    SharedPreferences.getInstance().then((prefs) {
+      const key = "memo-list";
+      if (prefs.containsKey(key)) {
+        _memoList = prefs.getStringList(key);
+      }
+      setState(() {
+        _loading = false;
+      });
+    });
+  }
+
   void _addMemo() {
     setState(() {
-      _currentMemo = new MemoDataModel(title: "", content: "");
-      _memoList.add(_currentMemo);
+      _memoList.add("");
+      _currentIndex = _memoList.length - 1;
       Navigator.of(context).push(
         MaterialPageRoute<void>(
-            builder: (BuildContext context) =>
-                new Edit(_currentMemo.content, _onChanged)),
+            builder: (BuildContext context) {
+              return new Edit(_memoList[_currentIndex], _onChanged);
+            },
+        )
       );
     });
   }
 
   void _onChanged(String text) {
     setState(() {
-      _currentMemo.content = text;
+      _memoList[_currentIndex] = text;
+      storeData();
     });
+  }
+
+  void storeData() async {
+    final prefs = await SharedPreferences.getInstance();
+    const key = "memo-list";
+    final success = await prefs.setStringList(key, _memoList);
+    if (!success) {
+      debugPrint("Failed to store value");
+    }
   }
 
   Widget _buildList() {
@@ -63,8 +102,8 @@ class MemoListState extends State<MemoList> {
         itemBuilder: /*1*/ (context, i) {
           if (i.isOdd) return Divider();
           final index = (i / 2).floor();
-          final model = _memoList[index];
-          return _buildRow(model.content, index);
+          final memo = _memoList[index];
+          return _buildRow(memo, index);
         });
   }
 
@@ -77,11 +116,13 @@ class MemoListState extends State<MemoList> {
         overflow: TextOverflow.ellipsis,
       ),
       onTap: () {
-        _currentMemo = _memoList[index];
+        _currentIndex = index;
         Navigator.of(context).push(
           MaterialPageRoute<void>(
-              builder: (BuildContext context) =>
-                  new Edit(_currentMemo.content, _onChanged)),
+              builder: (BuildContext context) {
+                return new Edit(_memoList[_currentIndex], _onChanged);
+              }
+          )
         );
       },
     );

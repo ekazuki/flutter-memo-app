@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -11,7 +9,6 @@ class Edit extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // debugPrint("build");
     return new Scaffold(
       appBar: new AppBar(
         title: new Text('Edit'),
@@ -23,8 +20,7 @@ class Edit extends StatelessWidget {
           ),
         ],
         leading: FlatButton(
-          onPressed: () => Navigator.of(context).pop()
-          ,
+          onPressed: () => Navigator.of(context).pop(),
           child: Icon(Icons.arrow_back_ios),
           shape: CircleBorder(side: BorderSide(color: Colors.transparent)),
         ),
