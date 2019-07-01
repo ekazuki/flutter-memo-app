@@ -69,7 +69,7 @@ class MemoListState extends State<MemoList> {
     setState(() {
       _memoList.add("");
       _currentIndex = _memoList.length - 1;
-      storeData();
+      storeMemoList();
       Navigator.of(context).push(MaterialPageRoute<void>(
         builder: (BuildContext context) {
           return new Edit(_memoList[_currentIndex], _onChanged);
@@ -81,11 +81,11 @@ class MemoListState extends State<MemoList> {
   void _onChanged(String text) {
     setState(() {
       _memoList[_currentIndex] = text;
-      storeData();
+      storeMemoList();
     });
   }
 
-  void storeData() async {
+  void storeMemoList() async {
     final prefs = await SharedPreferences.getInstance();
     const key = "memo-list";
     final success = await prefs.setStringList(key, _memoList);
@@ -115,7 +115,7 @@ class MemoListState extends State<MemoList> {
       onDismissed: (direction) {
         setState(() {
           _memoList.removeAt(index);
-          storeData();
+          storeMemoList();
         });
       },
       child: _buildRow(content, index),
